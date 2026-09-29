@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Floating Quick Note Settings</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body data-theme="paper">
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M7 3.75h7.7L19.25 8.3V20A1.25 1.25 0 0 1 18 21.25H7A2.25 2.25 0 0 1 4.75 19V6A2.25 2.25 0 0 1 7 3.75Z"/><path d="M14.5 3.9V8.5h4.6"/><path d="M8.25 12h7.5M8.25 15.5h7.5"/></svg>
+      </div>
+      <div class="brand-copy">
+        <h1 data-i18n="settingsTitle">Floating Quick Note</h1>
+        <p class="brand-version">v1.0.0</p>
+      </div>
+      <div class="header-language segmented" role="group" aria-label="Language">
+        <button class="lang-btn" data-lang="en" type="button" aria-label="English">EN</button>
+        <button class="lang-btn" data-lang="vi" type="button" aria-label="Tiếng Việt">VI</button>
+      </div>
+    </header>
+
+    <section class="quick-actions">
+      <button id="newNote" class="primary-action" type="button">
+        <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></svg></span>
+        <span class="action-copy"><span class="action-label" data-i18n="newNote">New note</span><span id="globalNew" class="global-shortcut" hidden></span></span>
+      </button>
+      <button id="openNoteWide" class="secondary-action" type="button">
+        <span class="action-icon open-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.75" y="4.5" width="16.5" height="15" rx="3.25"/><path d="M3.75 9.25h16.5"/><path class="note-lines" d="M7.75 13h8.5M7.75 16h5.25"/></svg></span>
+        <span class="action-copy"><span class="action-label" data-i18n="openNote">Open note</span><span id="globalOpen" class="global-shortcut" hidden></span></span>
+      </button>
+    </section>
+
+    <nav class="tabs" aria-label="Settings sections">
+      <button class="tab selected" data-tab="appearance" type="button" data-i18n="appearance">Appearance</button>
+      <button class="tab" data-tab="shortcuts" type="button" data-i18n="shortcuts">Shortcuts</button>
+      <button class="tab" data-tab="data" type="button" data-i18n="data">Data</button>
+    </nav>
+
+    <section class="tab-panel active" data-panel="appearance">
+      <div class="section-label theme-heading">
+        <div><h2 data-i18n="theme">Theme</h2><p data-i18n="themeHint">Applied instantly to the floating note.</p></div>
+      </div>
+      <div id="themeGrid" class="theme-grid"></div>
+    </section>
+
+    <section class="tab-panel" data-panel="shortcuts">
+      <div class="section-label shortcut-title-row">
+        <div><h2 data-i18n="quickShortcuts">Quick shortcuts</h2><p data-i18n="shortcutHint">Click a key combo, then press a replacement.</p></div>
+        <button id="resetShortcuts" class="text-btn" type="button" data-i18n="reset">Reset</button>
+      </div>
+      <div id="shortcutList" class="shortcut-list"></div>
+      <div class="browser-shortcuts">
+        <div>
+          <strong data-i18n="browserShortcuts">Browser shortcuts</strong>
+          <p data-i18n="browserHint">Global commands are managed by Chrome or Edge.</p>
+        </div>
+        <button id="browserShortcuts" class="small-btn" type="button" data-i18n="manage">Manage</button>
+      </div>
+    </section>
+
+    <section class="tab-panel" data-panel="data">
+      <div class="storage-card">
+        <div class="storage-icon"><svg viewBox="0 0 24 24"><path d="M5 6.5C5 5.12 8.13 4 12 4s7 1.12 7 2.5S15.87 9 12 9 5 7.88 5 6.5Z"/><path d="M5 6.5v5C5 12.88 8.13 14 12 14s7-1.12 7-2.5v-5M5 11.5v5C5 17.88 8.13 19 12 19s7-1.12 7-2.5v-5"/></svg></div>
+        <div class="storage-copy">
+          <h2 data-i18n="storage">Extension memory</h2>
+          <p data-i18n="storageHint">Notes, images, history and preferences are stored locally.</p>
+        </div>
+      </div>
+      <button id="clearData" class="danger-btn" type="button" data-i18n="clearData">Clear all extension data</button>
+      <div id="confirmClear" class="confirm-box" hidden>
+        <strong data-i18n="confirmTitle">Delete everything?</strong>
+        <p data-i18n="confirmClear">This permanently removes notes, images, history and settings.</p>
+        <div class="confirm-actions">
+          <button id="cancelClear" class="ghost-btn" type="button" data-i18n="cancel">Cancel</button>
+          <button id="confirmClearBtn" class="danger-btn compact" type="button" data-i18n="deleteAll">Delete all</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="popup-footer">
+      <span class="author-info"><span data-i18n="authorLabel">Author:</span> <strong>DIEP VAN TIEN</strong></span>
+      <div class="donate-group" aria-label="Donate">
+        <span class="donate-label" data-i18n="donateLabel">Donate:</span>
+        <a class="donate-pill momo-pill" href="https://me.momo.vn/OeIGiJsViJfDfntmiRId" target="_blank" rel="noopener noreferrer" title="Donate via MoMo">
+          <img class="momo-logo" src="icons/momo.png" alt="" aria-hidden="true">
+          <span>MoMo</span>
+        </a>
+        <a class="donate-pill coffee-pill" href="https://buymeacoffee.com/tixuno" target="_blank" rel="noopener noreferrer" title="Buy Me a Coffee">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 8h1a3 3 0 0 1 0 6h-1"/><path d="M4 8h13v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V8Z"/><path d="M7 4v2M10.5 4v2M14 4v2"/></svg>
+          <span>Buy Me a Coffee</span>
+        </a>
+      </div>
+    </footer>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>
