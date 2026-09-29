@@ -6,7 +6,6 @@
   if (window.top !== window) return;
 
   if (pageWindow.__FQN_CONTROLLER__?.isAlive?.()) {
-    pageWindow.__FQN_CONTROLLER__.ensureMounted();
     return;
   }
 
@@ -195,6 +194,11 @@
   let currentMorphDirection = null;
   let currentMorphPromise = null;
   let frameHost, frameEl, frameShadowEl, framePointerActive = false, frameClipRequest = null;
+  let uiAbortController = null;
+  let uiObservers = [];
+  let preparingUI = null;
+  let storageSubscribed = false;
+  let uiReady = false;
 
   function currentLanguage() {
     return state.settings?.language === "vi" ? "vi" : "en";
@@ -387,13 +391,13 @@
     .bubble-wrap.visible .bubble,.bubble-wrap.visible .bubble-close{pointer-events:auto}
     .bubble-wrap.physics-animating,.bubble-wrap.physics-animating *{transition:none!important;pointer-events:none!important}
     .bubble-wrap.physics-animating .bubble{transform:none!important}
-    .bubble{position:absolute;inset:0;width:56px;height:56px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--bubble-text) 18%,transparent);border-radius:50%;background:radial-gradient(circle at 31% 24%,rgba(255,255,255,.52),transparent 28%),linear-gradient(145deg,var(--bubble-a),var(--bubble-b));color:var(--bubble-text);box-shadow:0 11px 28px rgba(0,0,0,.19),inset 0 1px rgba(255,255,255,.72),inset 0 -1px color-mix(in srgb,var(--bubble-text) 10%,transparent);cursor:grab;user-select:none;touch-action:none;transition:transform 130ms ease,box-shadow 130ms ease,filter 130ms ease}
-    .bubble:hover{transform:scale(1.045);filter:saturate(1.04);box-shadow:0 14px 32px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.8),inset 0 -1px color-mix(in srgb,var(--bubble-text) 10%,transparent)}
+    .bubble{position:absolute;inset:0;width:56px;height:56px;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--bubble-text) 18%,transparent);border-radius:50%;background:radial-gradient(circle at 31% 24%,rgba(255,255,255,.52),transparent 28%),linear-gradient(145deg,var(--bubble-a),var(--bubble-b));color:var(--bubble-text);box-shadow:inset 0 1px rgba(255,255,255,.72),inset 0 -1px color-mix(in srgb,var(--bubble-text) 10%,transparent);cursor:grab;user-select:none;touch-action:none;transition:transform 130ms ease,box-shadow 130ms ease,filter 130ms ease}
+    .bubble:hover{transform:scale(1.045);filter:saturate(1.04);box-shadow:inset 0 1px rgba(255,255,255,.8),inset 0 -1px color-mix(in srgb,var(--bubble-text) 10%,transparent)}
     .bubble.dragging{cursor:grabbing;transform:scale(1.025)}
     .bubble-glyph{width:36px;height:36px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,white 25%,transparent);border:1px solid color-mix(in srgb,white 28%,transparent);box-shadow:inset 0 1px rgba(255,255,255,.26);transition:transform 130ms ease,background 130ms ease}
     .bubble:hover .bubble-glyph{transform:translateY(-.5px);background:color-mix(in srgb,white 31%,transparent)}
     .bubble-glyph svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.72;stroke-linecap:round;stroke-linejoin:round}
-    .bubble-close{position:absolute;right:-5px;top:-5px;width:20px;height:20px;border:1px solid color-mix(in srgb,var(--text) 13%,transparent);border-radius:50%;display:block;padding:0;background:color-mix(in srgb,var(--bg) 92%,var(--accent) 8%);color:var(--text);box-shadow:0 4px 12px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.42);cursor:pointer;opacity:.88;transform:scale(.94);transition:transform 115ms ease,opacity 115ms ease,background 115ms ease}
+    .bubble-close{position:absolute;right:-5px;top:-5px;width:20px;height:20px;border:1px solid color-mix(in srgb,var(--text) 13%,transparent);border-radius:50%;display:block;padding:0;background:color-mix(in srgb,var(--bg) 92%,var(--accent) 8%);color:var(--text);box-shadow:inset 0 1px rgba(255,255,255,.42);cursor:pointer;opacity:.88;transform:scale(.94);transition:transform 115ms ease,opacity 115ms ease,background 115ms ease}
     .bubble-close::before,.bubble-close::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:1.6px;border-radius:2px;background:currentColor;transform-origin:center}
     .bubble-close::before{transform:translate(-50%,-50%) rotate(45deg)}
     .bubble-close::after{transform:translate(-50%,-50%) rotate(-45deg)}
@@ -480,9 +484,9 @@
 
   function cleanEditorHtml(rawHtml) {
     if (!rawHtml) return "";
-    const temp = document.createElement("div");
+    const temp = pageDocument.createElement("template");
     temp.innerHTML = String(rawHtml);
-    temp.querySelectorAll("img").forEach((img) => {
+    temp.content.querySelectorAll("img").forEach((img) => {
       img.classList.remove("fqn-img-selected", "fqn-img-enter", "fqn-img-copying");
       if (!img.className.trim()) img.removeAttribute("class");
       img.removeAttribute("data-fqn-temp");
@@ -491,9 +495,9 @@
   }
 
   function plainTextFromHtml(html) {
-    const el = document.createElement("div");
+    const el = pageDocument.createElement("template");
     el.innerHTML = html || "";
-    return (el.innerText || el.textContent || "").trim();
+    return (el.content.textContent || "").trim();
   }
 
   function previewFromHtml(html, max = 100) {
@@ -556,19 +560,18 @@
     out.notes = (out.notes || []).map((n) => ({
       id: n.id || uid(),
       title: migrateLegacyGeneratedTitle(n.title, "Note"),
-      html: typeof n.html === "string" ? cleanEditorHtml(n.html) : textToHtml(n.text || ""),
+      html: typeof n.html === "string" ? n.html : textToHtml(n.text || ""),
       createdAt: Number(n.createdAt) || Date.now(),
       updatedAt: Number(n.updatedAt) || Date.now(),
       history: Array.isArray(n.history)
-        ? n.history
+        ? n.history.slice(-HISTORY_LIMIT)
             .map((h) => ({
               id: h.id || uid(),
               timestamp: Number(h.timestamp) || Date.now(),
               title: migrateLegacyGeneratedTitle(h.title || n.title, "Note"),
-              html: typeof h.html === "string" ? cleanEditorHtml(h.html) : textToHtml(h.text || ""),
+              html: typeof h.html === "string" ? h.html : textToHtml(h.text || ""),
               source: migrateLegacyHistorySource(h.source)
             }))
-            .slice(-HISTORY_LIMIT)
         : []
     }));
     if (!out.notes.length) out.notes = [makeNote()];
@@ -631,14 +634,14 @@
   }
 
   function persist(immediate = false) {
-    if (applyingExternalState || !isExtensionContextValid()) return;
+    if (!mounted || applyingExternalState || !isExtensionContextValid()) return;
     clearTimeout(saveTimer);
     saveTimer = null;
     if (composingTarget) return;
     state.meta = { ...(state.meta || {}), lastWriter: INSTANCE_ID };
     const save = () => {
       saveTimer = null;
-      if (!isExtensionContextValid()) return;
+      if (!mounted || !isExtensionContextValid()) return;
       if (composingTarget) return;
       const revision = editRevision;
       chrome.storage.local.set({ [STORAGE_KEY]: state }).then(() => {
@@ -1245,23 +1248,17 @@
   }
 
   function ensureMounted() {
-    if (frameHost && !frameHost.isConnected) {
+    if (frameHost && (!frameHost.isConnected || frameEl?.contentDocument !== document)) {
       // Reattaching an iframe creates a new browsing context. Rebuild the UI
       // from the current state instead of retaining nodes from its old document.
       const detachedHost = frameHost;
       if (composingTarget) finishComposition();
       if (frameHost !== detachedHost) return; // A queued external update remounted it.
-      cancelPhysicsAnimations();
-      pageWindow.cancelAnimationFrame(frameClipRequest);
-      frameClipRequest = null;
-      framePointerActive = false;
-      mounted = false;
-      host = frameHost = frameEl = frameShadowEl = null;
-      window = pageWindow;
-      document = pageDocument;
+      disposeUI();
     }
     if (!mounted || !host) {
       mount();
+      subscribeToStorage();
       return;
     }
     const rootTarget = document.documentElement || document.body;
@@ -1485,9 +1482,9 @@
       snapshot("resize image");
     };
 
-    window.addEventListener("pointermove", onMove, true);
-    window.addEventListener("pointerup", onUp, true);
-    window.addEventListener("pointercancel", onUp, true);
+    listenUI("pointermove", onMove, true);
+    listenUI("pointerup", onUp, true);
+    listenUI("pointercancel", onUp, true);
   }
 
   function markImageCopySuccess(img) {
@@ -1574,6 +1571,7 @@
   }
 
   function insertHtmlAtCaret(html, source = "add content") {
+    if (!mounted || !editor) return;
     editor.focus();
     const sel = getSelectionForEditor();
     let range = sel && sel.rangeCount ? sel.getRangeAt(0) : null;
@@ -1821,7 +1819,7 @@
   }
 
   function syncEditor(source = "auto save") {
-    if (composingTarget === editor) return;
+    if (!mounted || !editor || composingTarget === editor) return;
     const n = activeNote();
     const html = cleanEditorHtml(editor.innerHTML);
     if (n.html !== html) markNoteDirty(n.id, "html");
@@ -1978,9 +1976,9 @@
       }
     };
 
-    window.addEventListener("pointermove", move, true);
-    window.addEventListener("pointerup", up, true);
-    window.addEventListener("pointercancel", up, true);
+    listenUI("pointermove", move, true);
+    listenUI("pointerup", up, true);
+    listenUI("pointercancel", up, true);
   }
 
   function startWindowDrag(e) {
@@ -2030,23 +2028,78 @@
       }
     };
 
-    window.addEventListener("pointermove", move, true);
-    window.addEventListener("pointerup", up, true);
-    window.addEventListener("pointercancel", up, true);
+    listenUI("pointermove", move, true);
+    listenUI("pointerup", up, true);
+    listenUI("pointercancel", up, true);
   }
 
   // ============================================================================
   // MOUNT UI
   // ============================================================================
 
+  function listenUI(type, listener, options = {}) {
+    const config = typeof options === "boolean" ? { capture: options } : options;
+    window.addEventListener(type, listener, { ...config, signal: uiAbortController.signal });
+  }
+
+  function disposeUI({ releaseState = false } = {}) {
+    mounted = false;
+    uiReady = false;
+    uiAbortController?.abort();
+    uiAbortController = null;
+    for (const observer of uiObservers) observer.disconnect();
+    uiObservers = [];
+    cancelPhysicsAnimations();
+    pageWindow.cancelAnimationFrame(frameClipRequest);
+    frameClipRequest = null;
+    for (const timer of [saveTimer, historyTimer, compositionCommitTimer, showToast._t, markNoteCopySuccess._t]) clearTimeout(timer);
+    saveTimer = historyTimer = compositionCommitTimer = null;
+    if (storageSubscribed) chrome.storage.onChanged.removeListener(handleStorageChange);
+    storageSubscribed = false;
+    frameHost?.remove();
+    host?.remove();
+    host = shadow = rootEl = noteEl = bubbleWrapEl = bubbleEl = bodyEl = editor = titleInput = statusEl = footer = null;
+    notesPanel = historyPanel = shortcutsPanel = shortcutListEl = searchInput = savedCountEl = toastEl = moreMenuEl = null;
+    imgHudEl = imgScaleBtn = imgResizeHandle = lightboxEl = lightboxImg = lightboxScaleEl = copyImageBtn = null;
+    activeImg = hoveredImg = composingTarget = pendingExternalState = null;
+    frameHost = frameEl = frameShadowEl = null;
+    framePointerActive = isResizingImg = false;
+    window = pageWindow;
+    document = pageDocument;
+    if (releaseState) {
+      state = structuredClone(DEFAULT_STATE);
+      dirtyNoteFields.clear();
+      lastSnapshotHtml = "";
+    }
+  }
+
+  function closeNoteUI() {
+    if (composingTarget) finishComposition();
+    if (!mounted) return;
+    snapshot("editor blur");
+    state.ui.hidden = true;
+    state.ui.collapsed = true;
+    state.ui.updatedAt = Date.now();
+    persist(true);
+    disposeUI({ releaseState: true });
+  }
+
   function updateFrameClip() {
     frameClipRequest = null;
-    if (!frameEl?.isConnected) return;
+    if (!mounted || !frameEl?.isConnected) return;
+    // Never leave the exterior shadow visible after the iframe is hidden or its
+    // browsing context was replaced. CSS transition opacity is not a visibility flag.
+    if (!host?.isConnected || frameEl.contentDocument !== document) {
+      frameHost.style.setProperty("visibility", "hidden", "important");
+      frameShadowEl.style.display = "none";
+      return;
+    }
+    const noteVisible = noteEl?.classList.contains("visible") || currentMorphDirection;
     if (noteEl && frameShadowEl) {
       const r = noteEl.getBoundingClientRect();
       const style = window.getComputedStyle(noteEl);
       // Paint the exterior shadow separately without making that area clickable.
-      frameShadowEl.style.cssText = `position:absolute;pointer-events:none;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${style.borderRadius};box-shadow:${style.boxShadow};opacity:${style.opacity};visibility:${style.visibility};`;
+      frameShadowEl.style.cssText = `display:${noteVisible ? "block" : "none"};position:absolute;pointer-events:none;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${style.borderRadius};box-shadow:${style.boxShadow};opacity:${currentMorphDirection ? style.opacity : 1};`;
     }
     if (framePointerActive) {
       // Keep drags, text selections and native resizing in the child document
@@ -2063,23 +2116,34 @@
       });
     // Clip the full-viewport iframe to the UI so the page outside stays clickable.
     frameEl.style.clipPath = paths.length ? `path("${paths.join(" ")}")` : "inset(100%)";
+    frameHost.style.setProperty("visibility", paths.length ? "visible" : "hidden", "important");
     if (currentMorphDirection) scheduleFrameClip();
   }
 
   function scheduleFrameClip() {
-    if (frameEl && frameClipRequest === null) frameClipRequest = pageWindow.requestAnimationFrame(updateFrameClip);
+    if (mounted && frameEl && frameClipRequest === null) frameClipRequest = pageWindow.requestAnimationFrame(updateFrameClip);
   }
 
   function mountIsolatedFrame() {
     frameHost = pageDocument.createElement("div");
     frameHost.id = "__floating_quick_note_host__";
-    frameHost.style.cssText = "all:initial!important;position:fixed!important;inset:0!important;z-index:2147483647!important;pointer-events:none!important;";
+    frameHost.style.cssText = "all:initial!important;position:fixed!important;inset:0!important;z-index:2147483647!important;pointer-events:none!important;visibility:hidden!important;";
     const frameShadow = frameHost.attachShadow({ mode: "open" });
     frameShadowEl = pageDocument.createElement("div");
     frameShadow.appendChild(frameShadowEl);
     frameEl = pageDocument.createElement("iframe");
     frameEl.dataset.fqnFrame = "true";
     frameEl.title = "Floating Quick Note";
+    const currentFrame = frameEl;
+    frameEl.addEventListener("load", () => {
+      if (currentFrame !== frameEl || !uiReady || frameEl.contentDocument === document) return;
+      // A navigation discarded the child document. Do not leave an empty frame
+      // or its exterior shadow on the page; the next explicit open rebuilds it.
+      if (composingTarget) finishComposition();
+      snapshot("editor blur");
+      persist(true);
+      disposeUI({ releaseState: true });
+    });
     frameEl.style.cssText = "display:block;position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;pointer-events:auto;clip-path:inset(100%);color-scheme:normal;";
     frameShadow.appendChild(frameEl);
     (pageDocument.documentElement || pageDocument.body).appendChild(frameHost);
@@ -2089,7 +2153,7 @@
     document = frameEl.contentDocument;
     document.documentElement.style.cssText = "margin:0;background:transparent;overflow:hidden";
     document.body.style.cssText = "margin:0;background:transparent;overflow:hidden";
-    window.addEventListener("pointerdown", () => {
+    listenUI("pointerdown", () => {
       framePointerActive = true;
       frameEl.style.clipPath = "none";
       scheduleFrameClip();
@@ -2098,10 +2162,10 @@
       framePointerActive = false;
       scheduleFrameClip();
     };
-    window.addEventListener("pointerup", releasePointer, true);
-    window.addEventListener("pointercancel", releasePointer, true);
-    window.addEventListener("blur", releasePointer);
-    window.addEventListener("resize", scheduleFrameClip);
+    listenUI("pointerup", releasePointer, true);
+    listenUI("pointercancel", releasePointer, true);
+    listenUI("blur", releasePointer);
+    listenUI("resize", scheduleFrameClip);
   }
 
   function mount() {
@@ -2111,6 +2175,7 @@
       return;
     }
     mounted = true;
+    uiAbortController = new AbortController();
     if (!IS_STANDALONE) mountIsolatedFrame();
     host = document.createElement("div");
     host.id = "__floating_quick_note_host__";
@@ -2227,17 +2292,16 @@
     lightboxImg = lightboxEl.querySelector("img");
     lightboxScaleEl = shadow.querySelector(".lb-scale");
     copyImageBtn = shadow.querySelector(".hud-copy-img");
+    if (window.getComputedStyle(noteEl).position !== "fixed") {
+      throw new Error("The page blocked the note stylesheet; use the standalone window.");
+    }
 
     shadow.querySelector(".header").addEventListener("pointerdown", startWindowDrag);
     bubbleEl.addEventListener("pointerdown", startBubbleDrag);
     shadow.querySelector(".bubble-close").addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); });
     shadow.querySelector(".bubble-close").addEventListener("click", (e) => {
       e.preventDefault(); e.stopPropagation();
-      state.ui.hidden = true;
-      state.ui.collapsed = true;
-      state.ui.updatedAt = Date.now();
-      applyVisibility();
-      persist(true);
+      closeNoteUI();
     });
     shadow.querySelector(".notes-btn").addEventListener("click", openNotesPanel);
     shadow.querySelector(".new-btn").addEventListener("click", createNote);
@@ -2249,10 +2313,7 @@
         window.close();
         return;
       }
-      state.ui.hidden = true;
-      state.ui.updatedAt = Date.now();
-      applyVisibility();
-      persist(true);
+      closeNoteUI();
     });
     shadow.querySelectorAll(".panel-back").forEach((b) => b.addEventListener("click", closePanels));
     shadow.querySelector(".panel-new").addEventListener("click", createNote);
@@ -2480,8 +2541,8 @@
         window.removeEventListener("pointermove", move, true);
         window.removeEventListener("pointerup", up, true);
       };
-      window.addEventListener("pointermove", move, true);
-      window.addEventListener("pointerup", up, true);
+      listenUI("pointermove", move, true);
+      listenUI("pointerup", up, true);
     });
 
     // Smart keyboard shortcuts: editable and scoped to this popup only.
@@ -2554,7 +2615,7 @@
       persist(true);
     });
 
-    window.addEventListener("blur", () => persist(false));
+    listenUI("blur", () => persist(false));
 
     // Save user-initiated window resize only on pointerup when dimensions changed
     let resizeStartW = 0;
@@ -2564,7 +2625,7 @@
       resizeStartW = Math.round(r.width);
       resizeStartH = Math.round(r.height);
     });
-    window.addEventListener("pointerup", () => {
+    listenUI("pointerup", () => {
       if (!mounted || state.ui.hidden || state.ui.collapsed || !noteEl.classList.contains("visible") || IS_STANDALONE) return;
       const r = noteEl.getBoundingClientRect();
       const w = Math.round(r.width);
@@ -2579,7 +2640,7 @@
       }
     });
 
-    window.addEventListener("resize", () => {
+    listenUI("resize", () => {
       if (!mounted) return;
       if (state.ui.collapsed) applyBubblePosition();
       else if (!state.ui.hidden) {
@@ -2594,6 +2655,7 @@
     });
     if (frameEl) {
       const frameObserver = new MutationObserver(scheduleFrameClip);
+      uiObservers.push(frameObserver);
       frameObserver.observe(noteEl, { attributes: true, attributeFilter: ["class", "style"] });
       frameObserver.observe(bubbleWrapEl, { attributes: true, attributeFilter: ["class", "style"] });
     }
@@ -2602,56 +2664,77 @@
       updateResponsiveHeader();
       updateCopyButtonOffset();
     });
+    uiObservers.push(headerResizeObserver);
     headerResizeObserver.observe(noteEl);
     refreshEditor();
     applyThemeAndLanguage();
     updateResponsiveHeader();
     applyVisibility({ forcePosition: true });
     updateCopyButtonOffset();
+    uiReady = true;
     scheduleFrameClip();
   }
 
+  async function waitForDocument() {
+    if (pageDocument.readyState === "loading") {
+      await new Promise((resolve) => pageDocument.addEventListener("DOMContentLoaded", resolve, { once: true }));
+    }
+  }
+
+  function subscribeToStorage() {
+    if (storageSubscribed) return;
+    chrome.storage.onChanged.addListener(handleStorageChange);
+    storageSubscribed = true;
+  }
+
   async function initialize() {
-    try {
-      await loadState();
-    } catch (error) {
-      console.warn("Floating Quick Note: could not read existing data; using defaults.", error);
-      state = structuredClone(DEFAULT_STATE);
-    }
-    if (document.readyState === "loading") {
-      await new Promise((resolve) => document.addEventListener("DOMContentLoaded", resolve, { once: true }));
-    }
+    // Ordinary tabs do no storage work and create no DOM until explicitly opened.
+    if (!IS_STANDALONE) return;
+    await waitForDocument();
+    await loadState();
     try {
       mount();
+      subscribeToStorage();
     } catch (error) {
-      console.error("Floating Quick Note: UI initialization failed.", error);
+      disposeUI();
+      throw error;
     }
   }
 
   const initPromise = initialize();
 
-  pageWindow.__FQN_CONTROLLER__ = {
-    isAlive: () => isExtensionContextValid(),
-    ensureMounted: () => {
-      ensureMounted();
-      applyVisibility();
-    },
-    showWindow: async () => {
-      await initPromise;
-      const wasVisibleBubble = Boolean(
-        mounted &&
-        ((bubbleWrapEl?.classList.contains("visible") && !noteEl?.classList.contains("visible")) ||
-          currentMorphDirection === "expand")
-      );
-      if (!saveTimer && !composingTarget && dirtyNoteFields.size === 0) {
-        await loadState().catch(() => {});
-      }
-      state.ui = state.ui || {};
+  async function prepareUI() {
+    await initPromise;
+    if (preparingUI) return preparingUI;
+    preparingUI = (async () => {
+      await waitForDocument();
+      if (!mounted) await loadState();
       state.ui.hidden = false;
       state.ui.collapsed = false;
       state.ui.updatedAt = Date.now();
+      try {
+        ensureMounted();
+        subscribeToStorage();
+      } catch (error) {
+        disposeUI();
+        throw error; // Background can fall back to the standalone window.
+      }
+    })();
+    try { await preparingUI; } finally { preparingUI = null; }
+  }
+
+  pageWindow.__FQN_CONTROLLER__ = {
+    isAlive: () => isExtensionContextValid(),
+    ensureMounted: () => {
+      if (!mounted) return;
       ensureMounted();
-      refreshEditor();
+      applyVisibility();
+    },
+    showWindow: async (newNote = false) => {
+      const wasVisibleBubble = Boolean(mounted && bubbleWrapEl?.classList.contains("visible"));
+      await prepareUI();
+      if (newNote) createNote();
+      else refreshEditor();
       applyThemeAndLanguage();
       if (!IS_STANDALONE && wasVisibleBubble) {
         await animateExpandFromBubble();
@@ -2666,10 +2749,7 @@
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!isExtensionContextValid()) return;
     if (message?.type === "FQN_PING") {
-      initPromise.then(() => {
-        ensureMounted();
-        sendResponse({ ok: true });
-      });
+      sendResponse({ ok: true });
       return true;
     }
     if (message?.type === "FQN_SHOW_WINDOW") {
@@ -2680,37 +2760,25 @@
       return true;
     }
     if (message?.type === "FQN_NEW_NOTE") {
-      initPromise.then(async () => {
-        const wasVisibleBubble = Boolean(
-          mounted &&
-          ((bubbleWrapEl?.classList.contains("visible") && !noteEl?.classList.contains("visible")) ||
-            currentMorphDirection === "expand")
-        );
-        state.ui.hidden = false;
-        state.ui.collapsed = false;
-        createNote();
-        if (!IS_STANDALONE && wasVisibleBubble) {
-          await animateExpandFromBubble();
-        } else {
-          applyVisibility({ forcePosition: true });
-        }
-        sendResponse({ ok: true });
-      }).catch(() => sendResponse({ ok: false }));
+      pageWindow.__FQN_CONTROLLER__.showWindow(true)
+        .then(() => sendResponse({ ok: true }))
+        .catch(() => sendResponse({ ok: false }));
       return true;
     }
   });
 
-  chrome.storage.onChanged.addListener((changes, area) => {
-    if (!isExtensionContextValid()) return;
+  function handleStorageChange(changes, area) {
+    if (!mounted || !isExtensionContextValid()) return;
     if (area !== "local" || !changes[STORAGE_KEY]?.newValue) return;
-    const incoming = normalizeState(changes[STORAGE_KEY].newValue);
-    if (incoming.meta?.lastWriter === INSTANCE_ID) return;
+    const raw = changes[STORAGE_KEY].newValue;
+    if (raw.meta?.lastWriter === INSTANCE_ID) return;
+    const incoming = normalizeState(raw);
     if (composingTarget) {
       pendingExternalState = incoming;
       return;
     }
     applyExternalState(incoming);
-  });
+  }
 
   function applyExternalState(incoming) {
     // A settings change or another tab's save can contain an older copy of the
@@ -2752,6 +2820,12 @@
     const prevTheme = state.settings?.theme;
     applyingExternalState = true;
     state = incoming;
+    if (!IS_STANDALONE && state.ui.hidden) {
+      applyingExternalState = false;
+      if (hasLocalChanges) persist(true);
+      disposeUI({ releaseState: true });
+      return;
+    }
     if (mounted) {
       ensureMounted();
       refreshEditor();

@@ -175,14 +175,6 @@ async function showWindowOnTab(tabId, tabUrl = "") {
   state.meta = { ...(state.meta || {}), lastWriter: "background" };
   await setState(state);
 
-  if (tabId) {
-    const ready = await ensureContentScript(tabId);
-    if (ready) {
-      const res = await sendMessage(tabId, { type: "FQN_SHOW_WINDOW" });
-      if (res?.ok) return;
-    }
-  }
-
   await openStandalonePopup();
 }
 
@@ -195,27 +187,12 @@ async function showOnActiveTab() {
   await showWindowOnTab(tab.id, tab.url || "");
 }
 
-async function injectIntoExistingTabs() {
-  try {
-    const tabs = await chrome.tabs.query({});
-    await Promise.allSettled(
-      tabs
-        .filter((tab) => tab.id && isInjectableUrl(tab.url || ""))
-        .map((tab) => injectContentScript(tab.id))
-    );
-  } catch {
-    // Ignore tab query errors during startup
-  }
-}
-
 chrome.runtime.onInstalled.addListener(() => {
   createMenus();
-  injectIntoExistingTabs();
 });
 
 chrome.runtime.onStartup.addListener(() => {
   createMenus();
-  injectIntoExistingTabs();
 });
 
 chrome.action.onClicked.addListener((tab) => {
@@ -247,8 +224,7 @@ async function createNewNoteFromCommand() {
   state.meta = { ...(state.meta || {}), lastWriter: "background" };
   await setState(state);
   if (tab?.id) {
-    const ready = await ensureContentScript(tab.id);
-    if (ready) await sendMessage(tab.id, { type: "FQN_SHOW_WINDOW" });
+    await showWindowOnTab(tab.id, tab.url || "");
   } else {
     await openStandalonePopup();
   }

@@ -31,6 +31,7 @@ The extension is built for Chromium browsers such as Chrome, Edge, Brave, and Ar
 
 ### Features
 
+- **Load only when needed:** The extension creates its floating interface only after you open a note on that tab. Closing it releases the iframe, UI observers, timers, and storage subscription. New pages and closed notes stay inactive until you open them again.
 - **Floating window and bubble:** Drag the note or bubble to a convenient position, resize the editor, and collapse or expand it with an animated transition. The bubble has no outer blur or drop shadow.
 - **Keyboard isolation:** The floating interface runs in its own iframe with Shadow DOM. Website shortcut handlers do not receive typing events from the note, including when they were registered before the extension loaded. Click outside the note to return keyboard focus to the page.
 - **Vietnamese typing:** Composition-aware input supports entering accented text in the editor, title, and search field. Note shortcuts wait while the input method is composing text, and incoming tab updates are deferred until composition finishes.
@@ -128,6 +129,8 @@ Notes, saved images, edit history, and preferences use `chrome.storage.local`. U
 | [`popup.js`](popup.js) | Settings, language selection, and shortcut customization |
 | [`standalone.html`](standalone.html) | Note window for pages where injection is unavailable |
 | [`icons/`](icons/) | Extension icons and supporting images |
+| [`tests/resources.bench.cjs`](tests/resources.bench.cjs) | Controlled resource benchmark using synthetic notes |
+| [`tests/background.test.cjs`](tests/background.test.cjs) | On-demand injection and standalone fallback tests |
 | [`tests/typing.test.cjs`](tests/typing.test.cjs) | Browser regression tests for typing, isolation, and window interactions |
 | [`tests/README.md`](tests/README.md) | Additional testing notes in Vietnamese |
 | [`LICENSE`](LICENSE) | License terms |
@@ -140,7 +143,7 @@ The automated tests require Node.js, Playwright, and Chrome:
 
 ```sh
 npm install --no-save --package-lock=false playwright
-node --test tests/typing.test.cjs
+node --test tests/background.test.cjs tests/typing.test.cjs
 ```
 
 The test runner uses Chrome's default macOS path. Set `CHROME_BIN` to your Chrome or Chromium executable on other systems. If Playwright is installed outside this project, set `NODE_PATH` to its `node_modules` directory.
@@ -177,6 +180,7 @@ Tiện ích dành cho các trình duyệt Chromium như Chrome, Edge, Brave và 
 
 ### Tính năng
 
+- **Chỉ tải khi cần:** Tiện ích chỉ tạo giao diện nổi sau khi bạn mở ghi chú trên tab đó. Đóng ghi chú sẽ giải phóng iframe, bộ theo dõi giao diện, bộ hẹn giờ và đăng ký nhận cập nhật lưu trữ. Trang mới và ghi chú đã đóng không tự xuất hiện lại cho đến khi bạn mở chúng.
 - **Cửa sổ nổi và bong bóng:** Kéo ghi chú hoặc bong bóng tới vị trí thuận tiện, đổi kích thước vùng soạn thảo và thu gọn/mở rộng với hiệu ứng chuyển động. Bong bóng không có quầng mờ hoặc bóng đổ bên ngoài.
 - **Cô lập bàn phím:** Giao diện nổi chạy trong iframe riêng kết hợp Shadow DOM. Các bộ xử lý phím tắt của trang web không nhận sự kiện gõ từ ghi chú, kể cả khi đã được đăng ký trước lúc extension được nạp. Bấm ra ngoài ghi chú để trả bàn phím cho trang web.
 - **Gõ tiếng Việt:** Hỗ trợ quá trình ghép dấu trong nội dung, tiêu đề và ô tìm kiếm. Phím tắt của ghi chú tạm nhường cho bộ gõ khi đang ghép chữ; cập nhật từ tab khác được chờ đến khi ghép chữ hoàn tất.
@@ -274,6 +278,8 @@ Ghi chú, ảnh đã lưu, lịch sử chỉnh sửa và tùy chọn sử dụng
 | [`popup.js`](popup.js) | Cài đặt, lựa chọn ngôn ngữ và tùy chỉnh phím tắt |
 | [`standalone.html`](standalone.html) | Cửa sổ ghi chú dành cho trang không cho phép chèn tiện ích |
 | [`icons/`](icons/) | Biểu tượng tiện ích và hình ảnh đi kèm |
+| [`tests/resources.bench.cjs`](tests/resources.bench.cjs) | Đo tài nguyên có kiểm soát với dữ liệu giả |
+| [`tests/background.test.cjs`](tests/background.test.cjs) | Kiểm thử nạp khi cần và chuyển sang cửa sổ độc lập |
 | [`tests/typing.test.cjs`](tests/typing.test.cjs) | Kiểm thử trình duyệt cho nhập liệu, cô lập sự kiện và thao tác cửa sổ |
 | [`tests/README.md`](tests/README.md) | Hướng dẫn kiểm thử bổ sung bằng tiếng Việt |
 | [`LICENSE`](LICENSE) | Điều khoản giấy phép |
@@ -286,7 +292,7 @@ Bộ kiểm thử tự động cần Node.js, Playwright và Chrome:
 
 ```sh
 npm install --no-save --package-lock=false playwright
-node --test tests/typing.test.cjs
+node --test tests/background.test.cjs tests/typing.test.cjs
 ```
 
 Bộ chạy kiểm thử dùng đường dẫn Chrome mặc định trên macOS. Đặt `CHROME_BIN` thành đường dẫn tệp thực thi Chrome hoặc Chromium nếu dùng hệ điều hành khác. Nếu Playwright được cài ngoài dự án, đặt `NODE_PATH` tới thư mục `node_modules` tương ứng.
