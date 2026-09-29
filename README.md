@@ -45,7 +45,7 @@
 ### 1. Cửa sổ nổi & Bong bóng thông minh (Fluid Bubble ↔ Popup)
 - **Hiệu ứng thu phóng mượt mà**: Chuyển đổi liền mạch giữa bong bóng thu gọn (`56×56px`) và cửa sổ ghi chú theo quỹ đạo vật lý (GPU-composited FLIP morph animation).
 - **Kéo thả & Đổi kích thước tự do**: Tự động ghi nhớ vị trí bong bóng, vị trí cửa sổ và kích thước khung soạn thảo theo tỷ lệ màn hình.
-- **Cô lập bằng Shadow DOM**: Giao diện hoàn toàn độc lập, không bao giờ xung đột CSS với trang web bạn đang truy cập.
+- **Cô lập bằng iframe và Shadow DOM**: Giao diện ghi chú có document riêng, giữ sự kiện bàn phím, bộ gõ tiếng Việt và clipboard trong ghi chú để phím tắt của trang web không chiếm phím đang gõ. Bấm ra ngoài để tiếp tục thao tác với trang web.
 - **Chế độ cửa sổ độc lập (`standalone.html`)**: Tự động mở cửa sổ popup riêng khi bạn gọi ghi chú trên các trang hệ thống bị trình duyệt giới hạn (`chrome://`, `edge://`, Web Store...).
 
 ### 2. Soạn thảo văn bản & Xử lý hình ảnh nâng cao (Rich Text & Image Tools)

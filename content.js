@@ -1,8 +1,12 @@
-(() => {
+((pageWindow, pageDocument) => {
+  // Storage and the controller stay in the content script; UI DOM/event targets
+  // switch to the child browsing context when the floating window is mounted.
+  let window = pageWindow;
+  let document = pageDocument;
   if (window.top !== window) return;
 
-  if (window.__FQN_CONTROLLER__?.isAlive?.()) {
-    window.__FQN_CONTROLLER__.ensureMounted();
+  if (pageWindow.__FQN_CONTROLLER__?.isAlive?.()) {
+    pageWindow.__FQN_CONTROLLER__.ensureMounted();
     return;
   }
 
@@ -180,11 +184,17 @@
   let historyTimer = null;
   let lastSnapshotHtml = "";
   let applyingExternalState = false;
+  let composingTarget = null;
+  let compositionCommitTimer = null;
+  let pendingExternalState = null;
+  let editRevision = 0;
+  const dirtyNoteFields = new Map();
   let recordingShortcutAction = null;
   let globalShortcutAssignments = {};
   let activePhysicsAnimations = [];
   let currentMorphDirection = null;
   let currentMorphPromise = null;
+  let frameHost, frameEl, frameShadowEl, framePointerActive = false, frameClipRequest = null;
 
   function currentLanguage() {
     return state.settings?.language === "vi" ? "vi" : "en";
@@ -407,6 +417,7 @@
   }
 
   function eventToShortcutSpec(e) {
+    if (isComposingEvent(e)) return "";
     const key = normalizeShortcutKey(e.key);
     if (["Control", "Meta", "Alt", "Shift"].includes(key) || !key) return "";
     const parts = [];
@@ -418,11 +429,13 @@
   }
 
   function shortcutMatches(e, spec) {
-    if (!spec) return false;
+    if (!spec || isComposingEvent(e) || e.getModifierState?.("AltGraph")) return false;
     const parts = String(spec).split("+").filter(Boolean);
     const wantsMod = parts.includes("Mod");
     const wantsAlt = parts.includes("Alt");
     const wantsShift = parts.includes("Shift");
+    // Ignore legacy/invalid single-key bindings: printable keys belong to typing.
+    if (!wantsMod && !wantsAlt) return false;
     const key = parts.find((part) => !["Mod", "Alt", "Shift"].includes(part));
     if (!key) return false;
     const modPressed = IS_MAC ? e.metaKey : e.ctrlKey;
@@ -620,10 +633,16 @@
   function persist(immediate = false) {
     if (applyingExternalState || !isExtensionContextValid()) return;
     clearTimeout(saveTimer);
+    saveTimer = null;
+    if (composingTarget) return;
     state.meta = { ...(state.meta || {}), lastWriter: INSTANCE_ID };
     const save = () => {
+      saveTimer = null;
       if (!isExtensionContextValid()) return;
+      if (composingTarget) return;
+      const revision = editRevision;
       chrome.storage.local.set({ [STORAGE_KEY]: state }).then(() => {
+        if (revision === editRevision && !isEditingNote()) dirtyNoteFields.clear();
         setStatus(tr("saved"));
       }).catch(() => {});
     };
@@ -657,7 +676,7 @@
   }
 
   function refreshEditor() {
-    if (!editor || !titleInput) return;
+    if (!editor || !titleInput || composingTarget) return;
     const n = activeNote();
     const cleaned = cleanEditorHtml(n.html || "");
     if (cleanEditorHtml(editor.innerHTML) !== cleaned) {
@@ -697,6 +716,7 @@
   }
 
   function snapshot(source = "auto save") {
+    if (composingTarget) return;
     const n = activeNote();
     const currentHtml = cleanEditorHtml(n.html || "");
     if (currentHtml === lastSnapshotHtml) return;
@@ -746,6 +766,7 @@
       card.querySelector(".card-time").textContent = tr("edited", { time: formatTime(n.updatedAt) });
       card.addEventListener("click", (e) => {
         if (e.target.closest(".mini-delete")) return;
+        if (composingTarget) finishComposition();
         snapshot("switch note");
         state.activeNoteId = n.id;
         refreshEditor();
@@ -788,6 +809,7 @@
   }
 
   function restoreHistory(h) {
+    if (composingTarget) finishComposition();
     const n = activeNote();
     if (n.html !== h.html) {
       n.history.push({
@@ -809,6 +831,7 @@
   }
 
   function createNote() {
+    if (composingTarget) finishComposition();
     snapshot("create new note");
     const n = makeNote(tr("noteN", { n: state.notes.length + 1 }));
     state.notes.push(n);
@@ -821,6 +844,7 @@
   }
 
   function deleteNote(id) {
+    if (composingTarget) finishComposition();
     if (state.notes.length === 1) {
       const n = state.notes[0];
       n.title = tr("newNote");
@@ -962,6 +986,7 @@
   }
 
   function cycleNote(direction) {
+    if (composingTarget) finishComposition();
     if (!state.notes.length) return;
     snapshot("switch note by shortcut");
     const ordered = [...state.notes].sort((a, b) => b.updatedAt - a.updatedAt);
@@ -1220,6 +1245,21 @@
   }
 
   function ensureMounted() {
+    if (frameHost && !frameHost.isConnected) {
+      // Reattaching an iframe creates a new browsing context. Rebuild the UI
+      // from the current state instead of retaining nodes from its old document.
+      const detachedHost = frameHost;
+      if (composingTarget) finishComposition();
+      if (frameHost !== detachedHost) return; // A queued external update remounted it.
+      cancelPhysicsAnimations();
+      pageWindow.cancelAnimationFrame(frameClipRequest);
+      frameClipRequest = null;
+      framePointerActive = false;
+      mounted = false;
+      host = frameHost = frameEl = frameShadowEl = null;
+      window = pageWindow;
+      document = pageDocument;
+    }
     if (!mounted || !host) {
       mount();
       return;
@@ -1781,14 +1821,58 @@
   }
 
   function syncEditor(source = "auto save") {
+    if (composingTarget === editor) return;
     const n = activeNote();
-    n.html = cleanEditorHtml(editor.innerHTML);
+    const html = cleanEditorHtml(editor.innerHTML);
+    if (n.html !== html) markNoteDirty(n.id, "html");
+    n.html = html;
     n.updatedAt = Date.now();
     setStatus(tr("saving"));
     updateMeta();
     updateImageHud();
     persist(false);
     scheduleHistory(source);
+  }
+
+  function isEditingNote() {
+    return document.hasFocus() && (shadow?.activeElement === editor || shadow?.activeElement === titleInput);
+  }
+
+  function isComposingEvent(e) {
+    // keyCode 229 also covers IMEs whose first/last key has isComposing=false.
+    return Boolean(composingTarget || e.isComposing || e.keyCode === 229 || e.key === "Process" || e.key === "Dead");
+  }
+
+  function markNoteDirty(id, field) {
+    if (!dirtyNoteFields.has(id)) dirtyNoteFields.set(id, new Set());
+    dirtyNoteFields.get(id).add(field);
+    editRevision++;
+  }
+
+  function syncTitle() {
+    if (composingTarget === titleInput) return;
+    const n = activeNote();
+    const title = titleInput.value || tr("note");
+    if (n.title !== title) markNoteDirty(n.id, "title");
+    n.title = title;
+    n.updatedAt = Date.now();
+    setStatus(tr("saving"));
+    persist(false);
+  }
+
+  function finishComposition() {
+    clearTimeout(compositionCommitTimer);
+    const target = composingTarget;
+    composingTarget = null;
+    if (target === editor) syncEditor();
+    else if (target === titleInput) syncTitle();
+    else if (target === searchInput) renderNotesPanel(searchInput.value);
+    if (pendingExternalState) {
+      const incoming = pendingExternalState;
+      pendingExternalState = null;
+      applyExternalState(incoming);
+    }
+    persist(false);
   }
 
   function markNoteCopySuccess() {
@@ -1955,6 +2039,71 @@
   // MOUNT UI
   // ============================================================================
 
+  function updateFrameClip() {
+    frameClipRequest = null;
+    if (!frameEl?.isConnected) return;
+    if (noteEl && frameShadowEl) {
+      const r = noteEl.getBoundingClientRect();
+      const style = window.getComputedStyle(noteEl);
+      // Paint the exterior shadow separately without making that area clickable.
+      frameShadowEl.style.cssText = `position:absolute;pointer-events:none;left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;border-radius:${style.borderRadius};box-shadow:${style.boxShadow};opacity:${style.opacity};visibility:${style.visibility};`;
+    }
+    if (framePointerActive) {
+      // Keep drags, text selections and native resizing in the child document
+      // until pointerup, even if the pointer leaves the visible note rectangle.
+      frameEl.style.clipPath = "none";
+      return;
+    }
+    const paths = [noteEl, bubbleWrapEl].filter((el) => el &&
+      (el.classList.contains("visible") || el.classList.contains("physics-animating")))
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        const pad = el === bubbleWrapEl ? 8 : 0;
+        return `M${r.left - pad} ${r.top - pad}H${r.right + pad}V${r.bottom + pad}H${r.left - pad}Z`;
+      });
+    // Clip the full-viewport iframe to the UI so the page outside stays clickable.
+    frameEl.style.clipPath = paths.length ? `path("${paths.join(" ")}")` : "inset(100%)";
+    if (currentMorphDirection) scheduleFrameClip();
+  }
+
+  function scheduleFrameClip() {
+    if (frameEl && frameClipRequest === null) frameClipRequest = pageWindow.requestAnimationFrame(updateFrameClip);
+  }
+
+  function mountIsolatedFrame() {
+    frameHost = pageDocument.createElement("div");
+    frameHost.id = "__floating_quick_note_host__";
+    frameHost.style.cssText = "all:initial!important;position:fixed!important;inset:0!important;z-index:2147483647!important;pointer-events:none!important;";
+    const frameShadow = frameHost.attachShadow({ mode: "open" });
+    frameShadowEl = pageDocument.createElement("div");
+    frameShadow.appendChild(frameShadowEl);
+    frameEl = pageDocument.createElement("iframe");
+    frameEl.dataset.fqnFrame = "true";
+    frameEl.title = "Floating Quick Note";
+    frameEl.style.cssText = "display:block;position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;pointer-events:auto;clip-path:inset(100%);color-scheme:normal;";
+    frameShadow.appendChild(frameEl);
+    (pageDocument.documentElement || pageDocument.body).appendChild(frameHost);
+    // An initial about:blank document needs no remote URL, permissions or scripts.
+    // Native keyboard, beforeinput, clipboard and IME events stay in this document.
+    window = frameEl.contentWindow;
+    document = frameEl.contentDocument;
+    document.documentElement.style.cssText = "margin:0;background:transparent;overflow:hidden";
+    document.body.style.cssText = "margin:0;background:transparent;overflow:hidden";
+    window.addEventListener("pointerdown", () => {
+      framePointerActive = true;
+      frameEl.style.clipPath = "none";
+      scheduleFrameClip();
+    }, true);
+    const releasePointer = () => {
+      framePointerActive = false;
+      scheduleFrameClip();
+    };
+    window.addEventListener("pointerup", releasePointer, true);
+    window.addEventListener("pointercancel", releasePointer, true);
+    window.addEventListener("blur", releasePointer);
+    window.addEventListener("resize", scheduleFrameClip);
+  }
+
   function mount() {
     if (mounted && host) {
       const rootTarget = document.documentElement || document.body;
@@ -1962,16 +2111,23 @@
       return;
     }
     mounted = true;
+    if (!IS_STANDALONE) mountIsolatedFrame();
     host = document.createElement("div");
     host.id = "__floating_quick_note_host__";
     host.style.all = "initial";
     (document.documentElement || document.body).appendChild(host);
     shadow = host.attachShadow({ mode: "open" });
 
+    // Keep UI events inside its shadow tree; the iframe also isolates capture listeners.
+    for (const type of ["keydown", "keypress", "keyup", "beforeinput", "input",
+      "compositionstart", "compositionupdate", "compositionend", "paste", "copy", "cut"]) {
+      shadow.addEventListener(type, (e) => e.stopPropagation());
+    }
+
     shadow.innerHTML = `
       <style>${css}</style>
       <div class="root">
-        <section class="window" role="dialog" aria-label="Floating Quick Note">
+        <section class="window" tabindex="-1" role="dialog" aria-label="Floating Quick Note">
           <div class="header">
             <div class="brand">
               <div class="brand-mark">${icons.note}</div>
@@ -2100,8 +2256,29 @@
     });
     shadow.querySelectorAll(".panel-back").forEach((b) => b.addEventListener("click", closePanels));
     shadow.querySelector(".panel-new").addEventListener("click", createNote);
-    searchInput.addEventListener("input", () => renderNotesPanel(searchInput.value));
+    for (const field of [editor, titleInput, searchInput]) {
+      field.addEventListener("compositionstart", () => {
+        if (composingTarget && composingTarget !== field) finishComposition();
+        clearTimeout(compositionCommitTimer);
+        composingTarget = field;
+        if (field === editor && activeImg) clearSelectedImage();
+        clearTimeout(saveTimer);
+        saveTimer = null;
+        clearTimeout(historyTimer);
+      });
+      field.addEventListener("compositionend", () => {
+        // Allow the final native input event to settle before reading the DOM.
+        compositionCommitTimer = setTimeout(finishComposition, 0);
+      });
+      field.addEventListener("blur", () => {
+        if (composingTarget === field) compositionCommitTimer = setTimeout(finishComposition, 0);
+      });
+    }
+    searchInput.addEventListener("input", (e) => {
+      if (!isComposingEvent(e)) renderNotesPanel(searchInput.value);
+    });
     searchInput.addEventListener("keydown", (e) => {
+      if (isComposingEvent(e)) return;
       const firstCard = notesPanel.querySelector(".note-card");
       if ((e.key === "Enter" || e.key === "ArrowDown") && firstCard) {
         e.preventDefault();
@@ -2111,7 +2288,11 @@
     });
 
     // Editor events
-    editor.addEventListener("input", () => syncEditor("auto save"));
+    editor.addEventListener("input", (e) => {
+      if (isComposingEvent(e)) return;
+      if (activeImg) clearSelectedImage();
+      syncEditor("auto save");
+    });
     editor.addEventListener("paste", handlePaste);
     editor.addEventListener("scroll", updateImageHud, { passive: true });
     editor.addEventListener("blur", () => {
@@ -2305,12 +2486,14 @@
 
     // Smart keyboard shortcuts: editable and scoped to this popup only.
     noteEl.addEventListener("keydown", (e) => {
-      if (recordingShortcutAction) return;
+      if (recordingShortcutAction || e.defaultPrevented || isComposingEvent(e)) return;
       const key = e.key.toLowerCase();
       const primary = e.ctrlKey || e.metaKey;
       const selection = getSelectionForEditor();
       const hasTextSelection = Boolean(selection && !selection.isCollapsed && String(selection).trim());
       const imageSelected = Boolean(activeImg && editor.contains(activeImg));
+      const imageKeyboardContext = e.target === editor || editor.contains(e.target) ||
+        imgHudEl.contains(e.target) || lightboxEl.contains(e.target);
 
       const shortcutHandlers = {
         save: () => { snapshot("manual save"); persist(true); showToast(tr("saved")); },
@@ -2331,7 +2514,7 @@
       }
 
       // Image-aware shortcuts only take over when an image is explicitly selected.
-      if (imageSelected && !hasTextSelection) {
+      if (imageSelected && imageKeyboardContext && !hasTextSelection) {
         if (primary && !e.altKey && key === "c") {
           e.preventDefault(); copySingleImage(activeImg); return;
         }
@@ -2361,21 +2544,17 @@
       }
     });
 
-    titleInput.addEventListener("input", () => {
-      const n = activeNote();
-      n.title = titleInput.value || tr("note");
-      n.updatedAt = Date.now();
-      setStatus(tr("saving"));
-      persist(false);
+    titleInput.addEventListener("input", (e) => {
+      if (!isComposingEvent(e)) syncTitle();
     });
     titleInput.addEventListener("blur", () => {
-      const n = activeNote();
-      if (!titleInput.value.trim()) {
-        titleInput.value = tr("note");
-        n.title = tr("note");
-      }
+      if (composingTarget === titleInput) return;
+      if (!titleInput.value.trim()) titleInput.value = tr("note");
+      syncTitle();
       persist(true);
     });
+
+    window.addEventListener("blur", () => persist(false));
 
     // Save user-initiated window resize only on pointerup when dimensions changed
     let resizeStartW = 0;
@@ -2410,7 +2589,16 @@
       }
     });
 
+    noteEl.addEventListener("pointerdown", (e) => {
+      if (!e.target.closest("input,button,[contenteditable]")) noteEl.focus({ preventScroll: true });
+    });
+    if (frameEl) {
+      const frameObserver = new MutationObserver(scheduleFrameClip);
+      frameObserver.observe(noteEl, { attributes: true, attributeFilter: ["class", "style"] });
+      frameObserver.observe(bubbleWrapEl, { attributes: true, attributeFilter: ["class", "style"] });
+    }
     const headerResizeObserver = new ResizeObserver(() => {
+      scheduleFrameClip();
       updateResponsiveHeader();
       updateCopyButtonOffset();
     });
@@ -2420,6 +2608,7 @@
     updateResponsiveHeader();
     applyVisibility({ forcePosition: true });
     updateCopyButtonOffset();
+    scheduleFrameClip();
   }
 
   async function initialize() {
@@ -2428,6 +2617,9 @@
     } catch (error) {
       console.warn("Floating Quick Note: could not read existing data; using defaults.", error);
       state = structuredClone(DEFAULT_STATE);
+    }
+    if (document.readyState === "loading") {
+      await new Promise((resolve) => document.addEventListener("DOMContentLoaded", resolve, { once: true }));
     }
     try {
       mount();
@@ -2438,7 +2630,7 @@
 
   const initPromise = initialize();
 
-  window.__FQN_CONTROLLER__ = {
+  pageWindow.__FQN_CONTROLLER__ = {
     isAlive: () => isExtensionContextValid(),
     ensureMounted: () => {
       ensureMounted();
@@ -2451,7 +2643,7 @@
         ((bubbleWrapEl?.classList.contains("visible") && !noteEl?.classList.contains("visible")) ||
           currentMorphDirection === "expand")
       );
-      if (!saveTimer) {
+      if (!saveTimer && !composingTarget && dirtyNoteFields.size === 0) {
         await loadState().catch(() => {});
       }
       state.ui = state.ui || {};
@@ -2481,7 +2673,7 @@
       return true;
     }
     if (message?.type === "FQN_SHOW_WINDOW") {
-      window.__FQN_CONTROLLER__
+      pageWindow.__FQN_CONTROLLER__
         .showWindow()
         .then(() => sendResponse({ ok: true }))
         .catch(() => sendResponse({ ok: false }));
@@ -2513,11 +2705,46 @@
     if (area !== "local" || !changes[STORAGE_KEY]?.newValue) return;
     const incoming = normalizeState(changes[STORAGE_KEY].newValue);
     if (incoming.meta?.lastWriter === INSTANCE_ID) return;
+    if (composingTarget) {
+      pendingExternalState = incoming;
+      return;
+    }
+    applyExternalState(incoming);
+  });
+
+  function applyExternalState(incoming) {
+    // A settings change or another tab's save can contain an older copy of the
+    // note being typed. Merge local edited fields before refreshing the DOM so
+    // neither the draft nor its native caret/undo state is replaced.
+    const keepActiveNote = isEditingNote() || dirtyNoteFields.size > 0;
+    let hasLocalChanges = false;
+    for (const [id, fields] of dirtyNoteFields) {
+      const local = state.notes.find((n) => n.id === id);
+      if (!local) continue;
+      const remote = incoming.notes.find((n) => n.id === id);
+      if (!remote) {
+        incoming.notes.push(structuredClone(local));
+        hasLocalChanges = true;
+        continue;
+      }
+      for (const field of fields) {
+        if (remote[field] !== local[field]) hasLocalChanges = true;
+        remote[field] = local[field];
+      }
+      remote.updatedAt = Math.max(remote.updatedAt, local.updatedAt);
+      remote.history = [...new Map([...remote.history, ...local.history].map((h) => [h.id, h])).values()]
+        .sort((a, b) => a.timestamp - b.timestamp).slice(-HISTORY_LIMIT);
+    }
+    if (keepActiveNote && incoming.notes.some((n) => n.id === state.activeNoteId)) {
+      incoming.activeNoteId = state.activeNoteId;
+    }
 
     // The settings popup now writes its own unique lastWriter id, so theme/language updates
     // reach every content script without forcing a tab to process its own typing saves.
     // Prevent any pending local timer in background tabs from overwriting fresher external state
     clearTimeout(saveTimer);
+    saveTimer = null;
+    clearTimeout(historyTimer);
 
     const prevHidden = state.ui?.hidden;
     const prevCollapsed = state.ui?.collapsed;
@@ -2560,5 +2787,9 @@
       }
     }
     applyingExternalState = false;
-  });
-})();
+    if (hasLocalChanges) {
+      persist(false);
+      scheduleHistory();
+    }
+  }
+})(window, document);
