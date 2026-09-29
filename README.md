@@ -1,203 +1,312 @@
 <div align="center">
 
-<img src="icons/icon128.png" alt="Floating Quick Note Logo" width="88" height="88" />
+<img src="icons/icon128.png" alt="Floating Quick Note logo" width="88" height="88" />
 
 # Floating Quick Note
 
-**Tiện ích ghi chú nổi thông minh, mượt mà và giàu tính năng cho trình duyệt Chromium (Chrome, Edge, Brave, Arc)**  
-*Smart, fluid, and feature-rich floating notes extension for Chromium browsers*
+**Floating notes with Vietnamese typing support, image tools, and customizable shortcuts for Chromium browsers.**
 
 [![Version](https://img.shields.io/badge/version-v1.0.0-eba825?style=for-the-badge)](https://github.com/diepvantien/Floating-Quick-Note/releases)
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-259fd1?style=for-the-badge)](manifest.json)
-[![Language](https://img.shields.io/badge/Language-VI%20%7C%20EN-5c996b?style=for-the-badge)](#)
-[![License](https://img.shields.io/badge/License-MIT%20(Personal%20Use)-8496ff?style=for-the-badge)](#giấy-phép--license)
+[![Languages](https://img.shields.io/badge/languages-EN%20%7C%20VI-5c996b?style=for-the-badge)](#english)
+[![License](https://img.shields.io/badge/license-Personal%20Use-8496ff?style=for-the-badge)](LICENSE)
 
-<p align="center">
-  <a href="https://github.com/diepvantien/Floating-Quick-Note/archive/refs/heads/main.zip">
-    <img src="https://img.shields.io/badge/⬇_Tải_Xuống_(Download_ZIP)-v1.0.0-1f1a14?style=for-the-badge&logo=github&logoColor=ffd86b" alt="Download ZIP" />
-  </a>
-  <a href="https://github.com/diepvantien/Floating-Quick-Note/releases">
-    <img src="https://img.shields.io/badge/📦_Releases-GitHub-2d333b?style=for-the-badge&logo=github" alt="GitHub Releases" />
-  </a>
-</p>
+[English](#english) · [Tiếng Việt](#tieng-viet)
 
-<p align="center">
-  <a href="https://me.momo.vn/OeIGiJsViJfDfntmiRId" target="_blank">
-    <img src="https://img.shields.io/badge/MoMo-Ủng_hộ_(Donate)-d82d8b?style=flat-square&logo=heart&logoColor=white" alt="Donate via MoMo" />
-  </a>
-  <a href="https://buymeacoffee.com/tixuno" target="_blank">
-    <img src="https://img.shields.io/badge/Buy_Me_a_Coffee-Support-FFDD00?style=flat-square&logo=buy-me-a-coffee&logoColor=black" alt="Buy Me a Coffee" />
-  </a>
-</p>
+[Download ZIP](https://github.com/diepvantien/Floating-Quick-Note/archive/refs/heads/main.zip) · [Releases](https://github.com/diepvantien/Floating-Quick-Note/releases) · [GitHub](https://github.com/diepvantien/Floating-Quick-Note)
 
 </div>
 
 ---
 
-## ✨ Giới thiệu (Overview)
+<a id="english"></a>
 
-**Floating Quick Note** giúp bạn ghi chú tức thì ngay trên bất kỳ trang web nào mà không cần chuyển tab hay rời khỏi luồng công việc hiện tại. Tiện ích kết hợp giữa **bong bóng nổi thu gọn (Floating Bubble)** và **cửa sổ soạn thảo đa năng (Popup Note)** với chuyển động thu phóng mượt mà, hỗ trợ dán/kéo thả hình ảnh, lưu lịch sử chỉnh sửa tự động và đồng bộ thời gian thực giữa mọi tab.
+## English
 
----
+### Overview
 
-## 🚀 Tính năng nổi bật (Key Features)
+Floating Quick Note lets you write notes alongside the page you are viewing. Open a floating editor, collapse it into a small bubble, and return to your notes without switching tabs.
 
-### 1. Cửa sổ nổi & Bong bóng thông minh (Fluid Bubble ↔ Popup)
-- **Hiệu ứng thu phóng mượt mà**: Chuyển đổi liền mạch giữa bong bóng thu gọn (`56×56px`) và cửa sổ ghi chú theo quỹ đạo vật lý (GPU-composited FLIP morph animation).
-- **Kéo thả & Đổi kích thước tự do**: Tự động ghi nhớ vị trí bong bóng, vị trí cửa sổ và kích thước khung soạn thảo theo tỷ lệ màn hình.
-- **Cô lập bằng iframe và Shadow DOM**: Giao diện ghi chú có document riêng, giữ sự kiện bàn phím, bộ gõ tiếng Việt và clipboard trong ghi chú để phím tắt của trang web không chiếm phím đang gõ. Bấm ra ngoài để tiếp tục thao tác với trang web.
-- **Chế độ cửa sổ độc lập (`standalone.html`)**: Tự động mở cửa sổ popup riêng khi bạn gọi ghi chú trên các trang hệ thống bị trình duyệt giới hạn (`chrome://`, `edge://`, Web Store...).
+The extension is built for Chromium browsers such as Chrome, Edge, Brave, and Arc. It includes an English/Vietnamese interface, multiple notes, image tools, search, and edit history. Notes and settings are stored locally and shared between tabs in the same browser profile.
 
-### 2. Soạn thảo văn bản & Xử lý hình ảnh nâng cao (Rich Text & Image Tools)
-- **Đa phương thức chèn nội dung**:
-  - Gõ văn bản trực tiếp hoặc dán từ Clipboard (`Ctrl+V` / `Cmd+V`).
-  - Kéo & thả hình ảnh từ máy tính hoặc từ trang web bất kỳ thẳng vào khung ghi chú.
-  - Menu chuột phải tiện lợi: *"Thêm văn bản đã chọn vào Floating Quick Note"* và *"Thêm ảnh vào Floating Quick Note"*.
-- **Lưu trữ ảnh Offline bền vững**: Tự động chuyển đổi ảnh từ liên kết ngoài sang định dạng `Data URL` để hiển thị ngay cả khi mất kết nối mạng.
-- **Thanh công cụ ảnh trực quan (Image HUD & Lightbox)**:
-  - Phóng to / thu nhỏ ảnh (`+` / `−` hoặc giữ `Ctrl/Cmd/Alt + Cuộn chuột`), kéo góc ảnh để thay đổi kích thước, hoặc đưa về chuẩn vừa khung (`100%`).
-  - Sao chép riêng từng ảnh vào Clipboard hoặc xóa nhanh ảnh.
-  - Nhấp đúp (Double-click) hoặc nhấn `Enter` khi chọn ảnh để mở chế độ **Lightbox** xem ảnh chi tiết (hỗ trợ cuộn để zoom lên tới `500%` và kéo để di chuyển).
-- **Sao chép toàn bộ ghi chú**: Nút Copy góc phải trình soạn thảo cho phép sao chép đồng thời cả văn bản và hình ảnh trong ghi chú.
+### Features
 
-### 3. Quản lý đa ghi chú, Tìm kiếm & Lịch sử (Multi-Note, Search & History)
-- **Nhiều ghi chú**: Tạo, chuyển đổi nhanh và quản lý danh sách tất cả ghi chú đã lưu.
-- **Tìm kiếm tức thì**: Lọc nhanh ghi chú theo tiêu đề hoặc nội dung văn bản bên trong.
-- **Lịch sử chỉnh sửa (Version History)**: Tự động chụp bản lưu tối đa **50 phiên bản/ghi chú** kèm nhãn thời gian và nguyên nhân thay đổi; khôi phục lại bất kỳ phiên bản cũ nào chỉ với 1 cú nhấp.
+- **Floating window and bubble:** Drag the note or bubble to a convenient position, resize the editor, and collapse or expand it with an animated transition. The bubble has no outer blur or drop shadow.
+- **Keyboard isolation:** The floating interface runs in its own iframe with Shadow DOM. Website shortcut handlers do not receive typing events from the note, including when they were registered before the extension loaded. Click outside the note to return keyboard focus to the page.
+- **Vietnamese typing:** Composition-aware input supports entering accented text in the editor, title, and search field. Note shortcuts wait while the input method is composing text, and incoming tab updates are deferred until composition finishes.
+- **Text and images:** Type, paste text or images, drag in images, or use the page context menu to add selected text and images to a note.
+- **Image tools:** Resize, fit, copy, delete, and preview images. The preview supports zooming and panning. External images are saved as data URLs when fetching succeeds, allowing those saved copies to display offline.
+- **Copy an entire note:** Copy text and images together using the editor's copy button.
+- **Multiple notes and search:** Create, switch between, delete, and search notes by title or content.
+- **Automatic saving and history:** Save edits automatically and keep up to 50 history entries per note, with timestamps and restore controls.
+- **Themes and languages:** Choose Paper, Midnight, Ocean, Sakura, Forest, or Graphite, and switch the interface between English and Vietnamese.
+- **Standalone window:** When a page does not allow extension injection, such as a browser settings page or an extension store, opening a note uses a separate window.
 
-### 4. 6 Chủ đề màu tinh tế & Song ngữ (6 Curated Themes & Bilingual UI)
-- **6 chủ đề màu được phối chuyên sâu**:
-  - 🌕 **Paper** *(Giấy ấm — Ấm và tối giản)*
-  - 🌌 **Midnight** *(Đêm sâu — Xanh đêm dịu)*
-  - 🌊 **Ocean** *(Đại dương — Mát và thoáng)*
-  - 🌸 **Sakura** *(Hoa anh đào — Hồng dịu nhẹ)*
-  - 🌲 **Forest** *(Rừng xanh — Xanh tự nhiên)*
-  - 🪨 **Graphite** *(Than chì — Tối trung tính)*
-- **Đồng bộ tức thời**: Đổi chủ đề hoặc ngôn ngữ (**Tiếng Việt `VI`** / **Tiếng Anh `EN`**) trong Settings Popup sẽ áp dụng ngay lập tức cho mọi tab đang mở mà không làm mất nội dung đang gõ.
+### Installation
 
----
+#### Download ZIP
 
-## 📥 Hướng dẫn cài đặt (Installation)
+1. Download the [ZIP archive](https://github.com/diepvantien/Floating-Quick-Note/archive/refs/heads/main.zip) or a package from [Releases](https://github.com/diepvantien/Floating-Quick-Note/releases).
+2. Extract it into a permanent folder on your computer.
+3. Open your browser's extension manager: `chrome://extensions`, `edge://extensions`, or `brave://extensions`.
+4. Enable **Developer mode**.
+5. Select **Load unpacked** and choose the folder containing `manifest.json`.
 
-### Cách 1: Tải file ZIP (Khuyên dùng)
-1. Nhấn vào nút **[⬇ Tải Xuống (Download ZIP)](https://github.com/diepvantien/Floating-Quick-Note/archive/refs/heads/main.zip)** hoặc tải từ mục **[Releases](https://github.com/diepvantien/Floating-Quick-Note/releases)**.
-2. Giải nén file `.zip` vừa tải về một thư mục cố định trên máy tính.
-3. Mở trình duyệt và truy cập:
-   - **Google Chrome**: `chrome://extensions`
-   - **Microsoft Edge**: `edge://extensions`
-   - **Brave**: `brave://extensions`
-4. Bật công tắc **Developer mode** *(Chế độ dành cho nhà phát triển)* ở góc trên bên phải.
-5. Nhấn nút **Load unpacked** *(Tải tiện ích đã giải nén)* và chọn thư mục vừa giải nén.
+#### Clone with Git
 
-### Cách 2: Clone qua Git
-```bash
+```sh
 git clone https://github.com/diepvantien/Floating-Quick-Note.git
 ```
-Sau đó mở `chrome://extensions`, bật **Developer mode** → chọn **Load unpacked** và trỏ tới thư mục `Floating-Quick-Note`.
+
+Load the cloned folder using **Load unpacked** as described above. The extension does not require a build step.
+
+#### Apply updates
+
+Update the files in the folder already loaded by your browser, click **Reload** on the extension card, and reload your open web pages. Existing tabs need a page reload to use the updated content script.
+
+### Getting started
+
+1. Click the extension icon to open settings, then choose **Open note** or **New note**.
+2. Click the note body to type or paste content. Edit the title at the top of the window.
+3. Use the toolbar to open saved notes, create a note, view history, or collapse the window into a bubble.
+4. Click the bubble to reopen the editor. Click outside the note to interact with the website again.
+5. Open settings to change the theme, language, shortcuts, or manage local data.
+
+To add content from a page, select text or right-click an image, then choose the corresponding **Floating Quick Note** context-menu item.
+
+### Keyboard shortcuts
+
+The browser-wide combinations below are the defaults suggested in the manifest. Manage their actual assignments through **Settings → Shortcuts → Browser shortcuts → Manage**. Customize note-window combinations directly in **Settings → Shortcuts**.
+
+#### Browser-wide commands
+
+| Action | Windows / Linux | macOS |
+| --- | --- | --- |
+| Open a note | `Alt + Shift + N` | `Cmd + Shift + N` |
+| Create a new note | `Alt + Shift + M` | `Cmd + Shift + M` |
+
+#### Inside the note window
+
+These shortcuts work while the note interface has keyboard focus.
+
+| Action | Windows / Linux | macOS |
+| --- | --- | --- |
+| Save note | `Ctrl + S` | `Cmd + S` |
+| Search notes | `Ctrl + K` | `Cmd + K` |
+| Create a new note | `Ctrl + Alt + N` | `Cmd + Alt + N` |
+| Copy entire note | `Ctrl + Alt + C` | `Cmd + Alt + C` |
+| Open edit history | `Ctrl + Alt + H` | `Cmd + Alt + H` |
+| Collapse to bubble | `Ctrl + Alt + M` | `Cmd + Alt + M` |
+| Next note | `Ctrl + Alt + ↓` | `Cmd + Alt + ↓` |
+| Previous note | `Ctrl + Alt + ↑` | `Cmd + Alt + ↑` |
+
+#### With an image selected
+
+Image shortcuts apply in the editor or image controls, without taking over typing in the title or search field.
+
+| Action | Shortcut |
+| --- | --- |
+| Copy selected image | `Ctrl + C` / `Cmd + C` |
+| Enlarge / shrink image | `+` / `−`, or hold `Ctrl`, `Cmd`, or `Alt` while scrolling over the image |
+| Fit image to note width | `0` |
+| Open image preview | `Enter`, or double-click the image |
+| Delete selected image | `Delete` / `Backspace` |
+
+### Local data
+
+Notes, saved images, edit history, and preferences use `chrome.storage.local`. Updates are shared between tabs in the same browser profile; this is not cloud synchronization between devices. Use **Settings → Data** to manage stored data.
+
+### Project structure
+
+| Path | Purpose |
+| --- | --- |
+| [`manifest.json`](manifest.json) | Manifest V3 configuration, permissions, and browser commands |
+| [`background.js`](background.js) | Service worker, context menus, global commands, image fetching, and standalone windows |
+| [`content.js`](content.js) | Floating iframe interface, editor, bubble, image tools, and note synchronization |
+| [`popup.html`](popup.html) | Settings interface |
+| [`popup.css`](popup.css) | Settings layout and themes |
+| [`popup.js`](popup.js) | Settings, language selection, and shortcut customization |
+| [`standalone.html`](standalone.html) | Note window for pages where injection is unavailable |
+| [`icons/`](icons/) | Extension icons and supporting images |
+| [`tests/typing.test.cjs`](tests/typing.test.cjs) | Browser regression tests for typing, isolation, and window interactions |
+| [`tests/README.md`](tests/README.md) | Additional testing notes in Vietnamese |
+| [`LICENSE`](LICENSE) | License terms |
+
+### Development and testing
+
+Edit the extension files, reload the extension, and refresh the page to test changes. No application build is needed.
+
+The automated tests require Node.js, Playwright, and Chrome:
+
+```sh
+npm install --no-save --package-lock=false playwright
+node --test tests/typing.test.cjs
+```
+
+The test runner uses Chrome's default macOS path. Set `CHROME_BIN` to your Chrome or Chromium executable on other systems. If Playwright is installed outside this project, set `NODE_PATH` to its `node_modules` directory.
+
+Tests run in headless Chrome with a temporary profile and mocked extension storage. They cover website shortcut conflicts, special characters, native IME composition, title persistence, incoming storage updates, undo/redo, dragging, resizing, collapsing, iframe recovery, and standalone mode. Direct testing with your operating system's Vietnamese input method remains useful alongside automated IME tests.
+
+### Author and support
+
+Created by **DIEP VAN TIEN**.
+
+- GitHub: [@diepvantien](https://github.com/diepvantien)
+- Repository: [Floating-Quick-Note](https://github.com/diepvantien/Floating-Quick-Note)
+- Support via [MoMo](https://me.momo.vn/OeIGiJsViJfDfntmiRId) or [Buy Me a Coffee](https://buymeacoffee.com/tixuno).
+
+### License
+
+Copyright © 2026 **DIEP VAN TIEN**.
+
+The project includes a license titled **MIT License (Personal Use Only)**. It permits personal, non-commercial use, copying, modification, and merging under the terms in [`LICENSE`](LICENSE). Commercial use, sale, sublicensing, distribution, or integration into commercial products, paid services, or monetized platforms requires the author's explicit prior written permission. Retain the copyright and permission notices in copies or substantial portions of the software.
+
+See [`LICENSE`](LICENSE) for the complete terms.
 
 ---
 
-## ⌨️ Hệ thống phím tắt mặc định (Default Shortcuts)
+<a id="tieng-viet"></a>
 
-> Bạn có thể tùy chỉnh lại toàn bộ các phím tắt này trong phần **Shortcuts (Phím tắt)** của popup cài đặt.
+## Tiếng Việt
 
-### Phím tắt toàn trình duyệt (Global Browser Shortcuts)
+### Giới thiệu
+
+Floating Quick Note giúp bạn ghi chú ngay bên cạnh trang web đang xem. Mở cửa sổ soạn thảo nổi, thu gọn thành bong bóng nhỏ và quay lại ghi chú mà không cần chuyển tab.
+
+Tiện ích dành cho các trình duyệt Chromium như Chrome, Edge, Brave và Arc. Các tính năng gồm giao diện tiếng Anh/tiếng Việt, nhiều ghi chú, công cụ ảnh, tìm kiếm và lịch sử chỉnh sửa. Ghi chú và cài đặt được lưu cục bộ, dùng chung giữa các tab trong cùng hồ sơ trình duyệt.
+
+### Tính năng
+
+- **Cửa sổ nổi và bong bóng:** Kéo ghi chú hoặc bong bóng tới vị trí thuận tiện, đổi kích thước vùng soạn thảo và thu gọn/mở rộng với hiệu ứng chuyển động. Bong bóng không có quầng mờ hoặc bóng đổ bên ngoài.
+- **Cô lập bàn phím:** Giao diện nổi chạy trong iframe riêng kết hợp Shadow DOM. Các bộ xử lý phím tắt của trang web không nhận sự kiện gõ từ ghi chú, kể cả khi đã được đăng ký trước lúc extension được nạp. Bấm ra ngoài ghi chú để trả bàn phím cho trang web.
+- **Gõ tiếng Việt:** Hỗ trợ quá trình ghép dấu trong nội dung, tiêu đề và ô tìm kiếm. Phím tắt của ghi chú tạm nhường cho bộ gõ khi đang ghép chữ; cập nhật từ tab khác được chờ đến khi ghép chữ hoàn tất.
+- **Văn bản và hình ảnh:** Gõ, dán văn bản hoặc ảnh, kéo thả ảnh, hoặc dùng menu chuột phải của trang web để thêm văn bản đã chọn và ảnh vào ghi chú.
+- **Công cụ ảnh:** Đổi kích thước, căn vừa khung, sao chép, xóa và xem trước ảnh. Chế độ xem trước hỗ trợ thu phóng và kéo để di chuyển ảnh. Ảnh từ liên kết ngoài được lưu dưới dạng data URL khi tải thành công, giúp các bản đã lưu hiển thị khi ngoại tuyến.
+- **Sao chép toàn bộ ghi chú:** Sao chép cả văn bản và ảnh bằng nút sao chép trong vùng soạn thảo.
+- **Nhiều ghi chú và tìm kiếm:** Tạo, chuyển đổi, xóa và tìm ghi chú theo tiêu đề hoặc nội dung.
+- **Tự động lưu và lịch sử:** Tự động lưu thay đổi và giữ tối đa 50 mục lịch sử cho mỗi ghi chú, kèm thời gian và thao tác khôi phục.
+- **Chủ đề và ngôn ngữ:** Chọn Paper, Midnight, Ocean, Sakura, Forest hoặc Graphite; chuyển giao diện giữa tiếng Anh và tiếng Việt.
+- **Cửa sổ độc lập:** Khi trang không cho phép chèn extension, chẳng hạn trang cài đặt trình duyệt hoặc cửa hàng tiện ích, thao tác mở ghi chú sẽ sử dụng cửa sổ riêng.
+
+### Cài đặt
+
+#### Tải file ZIP
+
+1. Tải [file ZIP](https://github.com/diepvantien/Floating-Quick-Note/archive/refs/heads/main.zip) hoặc một bản phát hành tại [Releases](https://github.com/diepvantien/Floating-Quick-Note/releases).
+2. Giải nén vào một thư mục cố định trên máy tính.
+3. Mở trang quản lý tiện ích: `chrome://extensions`, `edge://extensions` hoặc `brave://extensions`.
+4. Bật **Developer mode** — chế độ dành cho nhà phát triển.
+5. Chọn **Load unpacked** — tải tiện ích đã giải nén — rồi chọn thư mục chứa `manifest.json`.
+
+#### Clone bằng Git
+
+```sh
+git clone https://github.com/diepvantien/Floating-Quick-Note.git
+```
+
+Nạp thư mục vừa clone bằng **Load unpacked** theo hướng dẫn trên. Tiện ích không cần bước build.
+
+#### Áp dụng bản cập nhật
+
+Cập nhật các tệp trong đúng thư mục mà trình duyệt đang nạp, bấm **Reload** trên thẻ tiện ích, rồi tải lại các trang web đang mở. Các tab cũ cần được tải lại để sử dụng content script mới.
+
+### Bắt đầu sử dụng
+
+1. Bấm biểu tượng extension để mở cài đặt, sau đó chọn **Mở ghi chú** hoặc **Ghi chú mới**.
+2. Bấm vào nội dung ghi chú để gõ hoặc dán. Sửa tiêu đề ở đầu cửa sổ.
+3. Dùng thanh công cụ để mở danh sách ghi chú, tạo ghi chú, xem lịch sử hoặc thu gọn thành bong bóng.
+4. Bấm bong bóng để mở lại vùng soạn thảo. Bấm ra ngoài ghi chú để tiếp tục thao tác với trang web.
+5. Mở cài đặt để đổi chủ đề, ngôn ngữ, phím tắt hoặc quản lý dữ liệu cục bộ.
+
+Để thêm nội dung từ trang web, chọn văn bản hoặc nhấp chuột phải vào ảnh, rồi chọn mục **Floating Quick Note** tương ứng trong menu.
+
+### Phím tắt
+
+Các tổ hợp toàn trình duyệt bên dưới là mặc định được đề xuất trong manifest. Quản lý tổ hợp thực tế tại **Cài đặt → Phím tắt → Phím tắt trình duyệt → Quản lý**. Các tổ hợp trong cửa sổ ghi chú được tùy chỉnh trực tiếp tại **Cài đặt → Phím tắt**.
+
+#### Lệnh toàn trình duyệt
+
 | Thao tác | Windows / Linux | macOS |
-| :--- | :--- | :--- |
-| **Mở ghi chú (Open note)** | `Alt + Shift + N` | `Cmd + Shift + N` |
-| **Tạo ghi chú mới (New note)** | `Alt + Shift + M` | `Cmd + Shift + M` |
+| --- | --- | --- |
+| Mở ghi chú | `Alt + Shift + N` | `Cmd + Shift + N` |
+| Tạo ghi chú mới | `Alt + Shift + M` | `Cmd + Shift + M` |
 
-### Phím tắt nhanh trong cửa sổ ghi chú (Quick Shortcuts)
+#### Trong cửa sổ ghi chú
+
+Các phím tắt này hoạt động khi bàn phím đang được đặt vào giao diện ghi chú.
+
 | Thao tác | Windows / Linux | macOS |
-| :--- | :--- | :--- |
-| **Lưu ghi chú (Save note)** | `Ctrl + S` | `Cmd + S` |
-| **Tìm kiếm ghi chú (Search notes)** | `Ctrl + K` | `Cmd + K` |
-| **Tạo ghi chú mới (New note)** | `Ctrl + Alt + N` | `Cmd + Alt + N` |
-| **Sao chép toàn bộ ghi chú (Copy note)** | `Ctrl + Alt + C` | `Cmd + Alt + C` |
-| **Mở lịch sử chỉnh sửa (History)** | `Ctrl + Alt + H` | `Cmd + Alt + H` |
-| **Thu gọn thành bong bóng (Collapse)** | `Ctrl + Alt + M` | `Cmd + Alt + M` |
-| **Ghi chú tiếp theo (Next note)** | `Ctrl + Alt + ↓` | `Cmd + Alt + ↓` |
-| **Ghi chú trước đó (Previous note)** | `Ctrl + Alt + ↑` | `Cmd + Alt + ↑` |
+| --- | --- | --- |
+| Lưu ghi chú | `Ctrl + S` | `Cmd + S` |
+| Tìm ghi chú | `Ctrl + K` | `Cmd + K` |
+| Tạo ghi chú mới | `Ctrl + Alt + N` | `Cmd + Alt + N` |
+| Sao chép toàn bộ ghi chú | `Ctrl + Alt + C` | `Cmd + Alt + C` |
+| Mở lịch sử chỉnh sửa | `Ctrl + Alt + H` | `Cmd + Alt + H` |
+| Thu gọn thành bong bóng | `Ctrl + Alt + M` | `Cmd + Alt + M` |
+| Ghi chú tiếp theo | `Ctrl + Alt + ↓` | `Cmd + Alt + ↓` |
+| Ghi chú trước đó | `Ctrl + Alt + ↑` | `Cmd + Alt + ↑` |
 
-### Phím tắt khi đang chọn ảnh (Image Context Shortcuts)
+#### Khi đang chọn ảnh
+
+Phím tắt ảnh áp dụng trong vùng soạn thảo hoặc công cụ ảnh, không chiếm phím đang gõ trong tiêu đề hay ô tìm kiếm.
+
 | Thao tác | Phím tắt |
-| :--- | :--- |
-| **Sao chép ảnh đang chọn** | `Ctrl + C` / `Cmd + C` |
-| **Phóng to / Thu nhỏ ảnh** | `+` / `−` *(hoặc giữ `Ctrl/Cmd/Alt + Cuộn chuột`)* |
-| **Đặt lại kích thước vừa khung (100%)** | `0` |
-| **Xem trước ảnh (Lightbox)** | `Enter` *(hoặc Double-click vào ảnh)* |
-| **Xóa ảnh đang chọn** | `Delete` / `Backspace` |
+| --- | --- |
+| Sao chép ảnh đang chọn | `Ctrl + C` / `Cmd + C` |
+| Phóng to / thu nhỏ ảnh | `+` / `−`, hoặc giữ `Ctrl`, `Cmd` hay `Alt` khi cuộn chuột trên ảnh |
+| Căn ảnh vừa chiều rộng ghi chú | `0` |
+| Mở xem trước ảnh | `Enter`, hoặc nhấp đúp vào ảnh |
+| Xóa ảnh đang chọn | `Delete` / `Backspace` |
 
----
+### Dữ liệu cục bộ
 
-## 📁 Cấu trúc thư mục (Project Structure)
+Ghi chú, ảnh đã lưu, lịch sử chỉnh sửa và tùy chọn sử dụng `chrome.storage.local`. Cập nhật được chia sẻ giữa các tab trong cùng hồ sơ trình duyệt; đây không phải đồng bộ đám mây giữa các thiết bị. Vào **Cài đặt → Dữ liệu** để quản lý dữ liệu đã lưu.
 
-```text
-Floating-Quick-Note/
-├── manifest.json       # Cấu hình Chrome Extension Manifest V3 (v1.0.0)
-├── background.js       # Service Worker: quản lý state, context menu, lệnh toàn cục & xử lý ảnh
-├── content.js          # Giao diện cửa sổ ghi chú nổi & bong bóng (Shadow DOM), trình soạn thảo, HUD ảnh
-├── popup.html          # Giao diện Popup cài đặt (Theme, Ngôn ngữ, Phím tắt, Dữ liệu)
-├── popup.css           # Hệ thống thiết kế & bảng màu 6 chủ đề cho Popup cài đặt
-├── popup.js            # Logic đồng bộ cài đặt, ghi nhận phím tắt & đa ngôn ngữ
-├── standalone.html     # Cửa sổ ghi chú độc lập khi mở trên trang hệ thống của trình duyệt
-├── icons/              # Bộ icon tiện ích (16, 32, 48, 128) & tài nguyên biểu tượng
-├── LICENSE             # Giấy phép MIT (Giới hạn sử dụng cá nhân)
-└── README.md           # Tài liệu hướng dẫn sử dụng
+### Cấu trúc dự án
+
+| Đường dẫn | Chức năng |
+| --- | --- |
+| [`manifest.json`](manifest.json) | Cấu hình Manifest V3, quyền truy cập và lệnh trình duyệt |
+| [`background.js`](background.js) | Service worker, menu chuột phải, lệnh toàn cục, tải ảnh và cửa sổ độc lập |
+| [`content.js`](content.js) | Giao diện iframe nổi, vùng soạn thảo, bong bóng, công cụ ảnh và đồng bộ ghi chú |
+| [`popup.html`](popup.html) | Giao diện cài đặt |
+| [`popup.css`](popup.css) | Bố cục và chủ đề của cài đặt |
+| [`popup.js`](popup.js) | Cài đặt, lựa chọn ngôn ngữ và tùy chỉnh phím tắt |
+| [`standalone.html`](standalone.html) | Cửa sổ ghi chú dành cho trang không cho phép chèn tiện ích |
+| [`icons/`](icons/) | Biểu tượng tiện ích và hình ảnh đi kèm |
+| [`tests/typing.test.cjs`](tests/typing.test.cjs) | Kiểm thử trình duyệt cho nhập liệu, cô lập sự kiện và thao tác cửa sổ |
+| [`tests/README.md`](tests/README.md) | Hướng dẫn kiểm thử bổ sung bằng tiếng Việt |
+| [`LICENSE`](LICENSE) | Điều khoản giấy phép |
+
+### Phát triển và kiểm thử
+
+Sửa các tệp của tiện ích, nạp lại extension rồi tải lại trang web để kiểm tra thay đổi. Không cần build ứng dụng.
+
+Bộ kiểm thử tự động cần Node.js, Playwright và Chrome:
+
+```sh
+npm install --no-save --package-lock=false playwright
+node --test tests/typing.test.cjs
 ```
 
----
+Bộ chạy kiểm thử dùng đường dẫn Chrome mặc định trên macOS. Đặt `CHROME_BIN` thành đường dẫn tệp thực thi Chrome hoặc Chromium nếu dùng hệ điều hành khác. Nếu Playwright được cài ngoài dự án, đặt `NODE_PATH` tới thư mục `node_modules` tương ứng.
 
-## 👤 Tác giả & Ủng hộ (Author & Donate)
+Kiểm thử chạy Chrome headless với hồ sơ tạm và mô phỏng API lưu trữ của extension. Các ca kiểm tra bao gồm xung đột phím tắt của web, ký tự đặc biệt, ghép dấu qua IME gốc, lưu tiêu đề, cập nhật từ bộ nhớ, hoàn tác/làm lại, kéo, đổi kích thước, thu gọn, phục hồi iframe và chế độ cửa sổ độc lập. Nên kết hợp kiểm thử IME tự động với việc thử trực tiếp bộ gõ tiếng Việt đang dùng trên hệ điều hành.
 
-Dự án được phát triển và thiết kế bởi **DIEP VAN TIEN**.
+### Tác giả và ủng hộ
 
-- **Tác giả (Author)**: **DIEP VAN TIEN**
-- **GitHub**: [@diepvantien](https://github.com/diepvantien)
-- **Repository**: [https://github.com/diepvantien/Floating-Quick-Note](https://github.com/diepvantien/Floating-Quick-Note)
+Phát triển bởi **DIEP VAN TIEN**.
 
-Nếu bạn thấy tiện ích **Floating Quick Note** hữu ích cho công việc và học tập hằng ngày, bạn có thể ủng hộ tác giả một ly cà phê qua:
+- GitHub: [@diepvantien](https://github.com/diepvantien)
+- Mã nguồn: [Floating-Quick-Note](https://github.com/diepvantien/Floating-Quick-Note)
+- Ủng hộ qua [MoMo](https://me.momo.vn/OeIGiJsViJfDfntmiRId) hoặc [Buy Me a Coffee](https://buymeacoffee.com/tixuno).
 
-| Kênh ủng hộ | Liên kết |
-| :--- | :--- |
-| <img src="icons/momo.png" width="16" height="16" alt="MoMo" /> **Ví MoMo** | [**https://me.momo.vn/OeIGiJsViJfDfntmiRId**](https://me.momo.vn/OeIGiJsViJfDfntmiRId) |
-| ☕ **Buy Me a Coffee** | [**https://buymeacoffee.com/tixuno**](https://buymeacoffee.com/tixuno) |
+### Giấy phép
 
----
+Bản quyền © 2026 **DIEP VAN TIEN**.
 
-## 📄 Giấy phép (License)
+Dự án có giấy phép mang tên **MIT License (Personal Use Only)**. Giấy phép cho phép sử dụng, sao chép, sửa đổi và kết hợp mã cho mục đích cá nhân, phi thương mại theo các điều khoản trong [`LICENSE`](LICENSE). Việc sử dụng thương mại, bán, cấp phép lại, phân phối hoặc tích hợp vào sản phẩm thương mại, dịch vụ trả phí hay nền tảng kiếm tiền cần có sự đồng ý rõ ràng trước bằng văn bản của tác giả. Giữ thông báo bản quyền và thông báo cấp phép trong các bản sao hoặc phần đáng kể của phần mềm.
 
-### MIT License — Chỉ sử dụng cho mục đích cá nhân (Personal Use Only)
+Xem đầy đủ điều khoản tại [`LICENSE`](LICENSE).
 
-Copyright (c) 2026 **DIEP VAN TIEN**
-
-Phần mềm này được cấp phép theo các điều khoản của **Giấy phép MIT (MIT License)** với điều kiện giới hạn **chỉ dành cho mục đích sử dụng cá nhân, phi thương mại (Personal, Non-Commercial Use Only)**:
-
-- ✅ **Được phép**: Tải xuống, sử dụng cá nhân, học tập và tùy biến cho nhu cầu cá nhân.
-- ❌ **Không được phép**: Sử dụng cho mục đích thương mại, bán lại, đóng gói lại để phân phối thương mại hoặc phát hành lại lên các kho ứng dụng dưới tên khác khi chưa có sự đồng ý bằng văn bản của tác giả **DIEP VAN TIEN**.
-
-```text
-MIT License (Personal Use Only)
-
-Copyright (c) 2026 DIEP VAN TIEN
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to use,
-copy, modify, and merge the Software strictly for personal, non-commercial
-purposes, subject to the following conditions:
-
-1. The above copyright notice, author attribution ("DIEP VAN TIEN"), and this
-   permission notice shall be included in all copies or substantial portions
-   of the Software.
-2. Commercial use, sale, paid distribution, or re-publishing of the Software
-   as a competing or rebranded product without prior written permission from
-   the copyright holder is strictly prohibited.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
+[Back to English / Quay lại phần tiếng Anh](#english)
